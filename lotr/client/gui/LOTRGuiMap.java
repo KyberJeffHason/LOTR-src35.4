@@ -1472,81 +1472,85 @@ public class LOTRGuiMap extends LOTRGuiMenuBase {
     }
 
     public void renderWaypoints(List<LOTRAbstractWaypoint> waypoints, int pass, int mouseX, int mouseY, boolean labels, boolean overrideToggles) {
-        this.setupMapClipping();
-        LOTRAbstractWaypoint mouseOverWP = null;
-        double distanceMouseOverWP = Double.MAX_VALUE;
-        float wpZoomlerp = (this.zoomExp - -3.3f) / 2.2f;
-        wpZoomlerp = Math.min(wpZoomlerp, 1.0f);
-        if(!this.enableZoomOutWPFading) {
-            wpZoomlerp = 1.0f;
-        }
-        if(wpZoomlerp > 0.0f) {
-            for(LOTRAbstractWaypoint waypoint : waypoints) {
-                double dy;
-                double dx;
-                boolean shared;
-                double distToWP;
-                boolean unlocked = this.mc.thePlayer != null && waypoint.hasPlayerUnlocked(this.mc.thePlayer);
-                boolean hidden = waypoint.isHidden();
-                boolean custom = waypoint instanceof LOTRCustomWaypoint;
-                boolean bl = shared = waypoint instanceof LOTRCustomWaypoint && ((LOTRCustomWaypoint) waypoint).isShared();
-                if(!this.isWaypointVisible(waypoint) && !overrideToggles || hidden && !unlocked) continue;
-                float[] pos = this.transformCoords(waypoint.getXCoord(), waypoint.getZCoord());
-                float x = pos[0];
-                float y = pos[1];
-                int clip = 200;
-                if(!(x >= mapXMin - clip) || !(x <= mapXMax + clip) || !(y >= mapYMin - clip) || !(y <= mapYMax + clip)) continue;
-                if(pass == 0) {
-                    float wpAlpha = wpZoomlerp;
-                    GL11.glEnable(3042);
-                    GL11.glBlendFunc(770, 771);
-                    if(LOTRGuiMap.isOSRS()) {
-                        float osScale = 0.33f;
-                        GL11.glPushMatrix();
-                        GL11.glScalef(0.33f, 0.33f, 1.0f);
-                        this.mc.getTextureManager().bindTexture(LOTRTextures.osrsTexture);
-                        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-                        this.drawTexturedModalRectFloat(x / 0.33f - 8.0f, y / 0.33f - 8.0f, 0, 0, 15.0f, 15.0f);
-                        GL11.glPopMatrix();
-                    }
-                    else {
-                        this.mc.getTextureManager().bindTexture(mapIconsTexture);
-                        GL11.glColor4f(1.0f, 1.0f, 1.0f, wpAlpha);
-                        this.drawTexturedModalRectFloat(x - 2.0f, y - 2.0f, 0 + (unlocked ? 4 : 0), 200 + (shared ? 8 : (custom ? 4 : 0)), 4.0f, 4.0f);
-                    }
-                    GL11.glDisable(3042);
-                    if(labels) {
-                        float zoomlerp = (this.zoomExp - -1.0f) / 4.0f;
-                        if((zoomlerp = Math.min(zoomlerp, 1.0f)) > 0.0f) {
-                            GL11.glPushMatrix();
-                            GL11.glTranslatef(x, y, 0.0f);
-                            float scale = zoomlerp;
-                            GL11.glScalef(scale, scale, scale);
-                            float alpha = zoomlerp;
-                            int alphaI = (int) ((alpha *= 0.8f) * 255.0f);
-                            alphaI = MathHelper.clamp_int(alphaI, 4, 255);
-                            GL11.glEnable(3042);
-                            GL11.glBlendFunc(770, 771);
-                            String s = waypoint.getDisplayName();
-                            int strX = -this.fontRendererObj.getStringWidth(s) / 2;
-                            int strY = -15;
-                            this.fontRendererObj.drawString(s, strX + 1, strY + 1, 0 + (alphaI << 24));
-                            this.fontRendererObj.drawString(s, strX, strY, 16777215 + (alphaI << 24));
-                            GL11.glDisable(3042);
-                            GL11.glPopMatrix();
-                        }
-                    }
-                }
-                if(pass != 1 || waypoint == this.selectedWaypoint || !(x >= mapXMin - 2) || !(x <= mapXMax + 2) || !(y >= mapYMin - 2) || !(y <= mapYMax + 2) || !((distToWP = Math.sqrt((dx = x - mouseX) * dx + (dy = y - mouseY) * dy)) <= 5.0) || !(distToWP <= distanceMouseOverWP)) continue;
-                mouseOverWP = waypoint;
-                distanceMouseOverWP = distToWP;
-            }
-        }
-        if(pass == 1 && mouseOverWP != null && !this.hasOverlay && !this.loadingConquestGrid) {
-            this.renderWaypointTooltip(mouseOverWP, false, mouseX, mouseY);
-        }
-        this.endMapClipping();
-    }
+		setupMapClipping();
+		LOTRAbstractWaypoint mouseOverWP = null;
+		double distanceMouseOverWP = Double.MAX_VALUE;
+		float wpZoomlerp = (zoomExp - -3.3f) / 2.2f;
+		wpZoomlerp = Math.min(wpZoomlerp, 1.0f);
+		if (!enableZoomOutWPFading) {
+			wpZoomlerp = 1.0f;
+		}
+		if (wpZoomlerp > 0.0f) {
+			for (LOTRAbstractWaypoint waypoint : waypoints) {
+				double dy;
+				double dx;
+				boolean shared;
+				double distToWP;
+				boolean unlocked = mc.thePlayer != null && waypoint.hasPlayerUnlocked(mc.thePlayer);
+				boolean hidden = waypoint.isHidden();
+				boolean custom = waypoint instanceof LOTRCustomWaypoint;
+				shared = waypoint instanceof LOTRCustomWaypoint && ((LOTRCustomWaypoint) waypoint).isShared();
+				if (!isWaypointVisible(waypoint) && !overrideToggles || hidden && !unlocked) {
+					continue;
+				}
+				float[] pos = this.transformCoords(waypoint.getXCoord(), waypoint.getZCoord());
+				float x = pos[0];
+				float y = pos[1];
+				int clip = 200;
+				if (x < mapXMin - clip || x > mapXMax + clip || y < mapYMin - clip || y > mapYMax + clip) {
+					continue;
+				}
+				if (pass == 0) {
+					float wpAlpha = wpZoomlerp;
+					GL11.glEnable(3042);
+					GL11.glBlendFunc(770, 771);
+					if (LOTRGuiMap.isOSRS()) {
+						GL11.glPushMatrix();
+						GL11.glScalef(0.33f, 0.33f, 1.0f);
+						mc.getTextureManager().bindTexture(LOTRTextures.osrsTexture);
+						GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+						this.drawTexturedModalRectFloat(x / 0.33f - 8.0f, y / 0.33f - 8.0f, 0, 0, 15.0f, 15.0f);
+						GL11.glPopMatrix();
+					} else {
+						mc.getTextureManager().bindTexture(mapIconsTexture);
+						GL11.glColor4f(1.0f, 1.0f, 1.0f, wpAlpha);
+						this.drawTexturedModalRectFloat(x - 2.0f, y - 2.0f, 0 + (unlocked ? 4 : 0), 200 + (shared ? 8 : custom ? 4 : 0), 4.0f, 4.0f);
+					}
+					GL11.glDisable(3042);
+					if (labels) {
+						float zoomlerp = (zoomExp - -1.0f) / 4.0f;
+						if ((zoomlerp = Math.min(zoomlerp, 1.0f)) > 0.0f) {
+							GL11.glPushMatrix();
+							GL11.glTranslatef(x, y, 0.0f);
+							float scale = zoomlerp;
+							GL11.glScalef(scale, scale, scale);
+							float alpha = zoomlerp;
+							int alphaI = (int) ((alpha *= 0.8f) * 255.0f);
+							alphaI = MathHelper.clamp_int(alphaI, 4, 255);
+							GL11.glEnable(3042);
+							GL11.glBlendFunc(770, 771);
+							String s = waypoint.getDisplayName();
+							int strX = -fontRendererObj.getStringWidth(s) / 2;
+							int strY = -15;
+							fontRendererObj.drawString(s, strX + 1, strY + 1, 0 + (alphaI << 24));
+							fontRendererObj.drawString(s, strX, strY, 16777215 + (alphaI << 24));
+							GL11.glDisable(3042);
+							GL11.glPopMatrix();
+						}
+					}
+				}
+				if (pass != 1 || waypoint == selectedWaypoint || x < mapXMin - 2 || x > mapXMax + 2 || y < mapYMin - 2 || y > mapYMax + 2 || (distToWP = Math.sqrt((dx = x - mouseX) * dx + (dy = y - mouseY) * dy)) > 5.0 || distToWP > distanceMouseOverWP) {
+					continue;
+				}
+				mouseOverWP = waypoint;
+				distanceMouseOverWP = distToWP;
+			}
+		}
+		if (pass == 1 && mouseOverWP != null && !hasOverlay && !loadingConquestGrid) {
+			renderWaypointTooltip(mouseOverWP, false, mouseX, mouseY);
+		}
+		endMapClipping();
+	}
 
     private void renderWaypointTooltip(LOTRAbstractWaypoint waypoint, boolean selected, int mouseX, int mouseY) {
         String name = waypoint.getDisplayName();
